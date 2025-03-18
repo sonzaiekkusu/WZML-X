@@ -76,7 +76,7 @@ async def restart_notification():
     else:
         chat_id, msg_id = 0, 0
 
-    now = datetime.now(timezone("Asia/Kolkata"))
+    now = datetime.now(timezone("Asia/Jakarta"))
 
     if Config.INCOMPLETE_TASK_NOTIFIER and Config.DATABASE_URL:
         if notifier_dict := await database.get_incomplete_tasks():
@@ -84,7 +84,7 @@ async def restart_notification():
                 msg = f"""⌬ <b><i>{"Restarted Successfully!" if cid == chat_id else "Bot Restarted!"}</i></b>
 ┟ <b>Date:</b> {now.strftime("%d/%m/%y")}
 ┠ <b>Time:</b> {now.strftime("%I:%M:%S %p")}
-┠ <b>TimeZone:</b> Asia/Kolkata
+┠ <b>TimeZone:</b> Asia/Jakarta
 ┖ <b>Version:</b> {get_version()}"""
                 for tag, links in data.items():
                     msg += f"\n\n{tag}: "
@@ -104,7 +104,7 @@ async def restart_notification():
                 text=f"""⌬ <b><i>Restarted Successfully!</i></b>
 ┟ <b>Date:</b> {now.strftime("%d/%m/%y")}
 ┠ <b>Time:</b> {now.strftime("%I:%M:%S %p")}
-┠ <b>TimeZone:</b> Asia/Kolkata
+┠ <b>TimeZone:</b> Asia/Jakarta
 ┖ <b>Version:</b> {get_version()}""",
             )
         except Exception as e:
