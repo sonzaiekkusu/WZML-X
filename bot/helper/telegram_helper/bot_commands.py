@@ -25,11 +25,11 @@ class BotCommands:
         "CancelTask": ["cancel", "c"],
         "CancelAll": ["cancelall", "call"],
         "ForceStart": ["forcestart", "fs"],
-        "Status": ["status", "s"],
+        "Status": ["status", "s", "statusall"],
         "MediaInfo": ["mediainfo", "mi"],
         "SpeedTest": ["speedtest", "stest"],
         "Ping": "ping",
-        "Restart": ["restart", "r"],
+        "Restart": ["restart", "r", "restartall"],
         "RestartSessions": ["restartses", "rses"],
         "Broadcast": ["broadcast", "bc"],
         "Stats": ["stats", "st"],
@@ -48,11 +48,12 @@ class BotCommands:
         "BotSet": ["bsetting", "bs"],
         "UserSet": ["usetting", "us"],
         "Select": ["select", "sel"],
+        "NzbSearch": "nzbsearch",
     }
 
     for key, cmds in commands.items():
         vars()[f"{key}Command"] = (
-            [f"{cmd}{Config.CMD_SUFFIX}" for cmd in cmds]
+            [f"{cmd}{Config.CMD_SUFFIX}" if cmd not in ["restartall", "statusall"] else cmd for cmd in cmds]
             if isinstance(cmds, list)
             else f"{cmds}{Config.CMD_SUFFIX}"
         )
