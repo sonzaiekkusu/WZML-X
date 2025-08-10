@@ -33,6 +33,11 @@ from .torrent_manager import TorrentManager
 
 async def update_qb_options():
     if not qbit_options:
+        if not TorrentManager.qbittorrent:
+            LOGGER.warning(
+                "qBittorrent is not initialized. Skipping qBittorrent options update."
+            )
+            return
         opt = await TorrentManager.qbittorrent.app.preferences()
         qbit_options.update(opt)
         del qbit_options["listen_port"]
@@ -131,10 +136,11 @@ async def load_settings():
         ):
             aria2_options.update(a2c_options)
 
-        if qbit_opt := await database.db.settings.qbittorrent.find_one(
-            {"_id": BOT_ID}, {"_id": 0}
-        ):
-            qbit_options.update(qbit_opt)
+        if not Config.DISABLE_TORRENTS:
+            if qbit_opt := await database.db.settings.qbittorrent.find_one(
+                {"_id": BOT_ID}, {"_id": 0}
+            ):
+                qbit_options.update(qbit_opt)
 
         if nzb_opt := await database.db.settings.nzb.find_one(
             {"_id": BOT_ID}, {"_id": 0}
@@ -156,14 +162,23 @@ async def load_settings():
                     "THUMBNAIL": f"thumbnails/{uid}.jpg",
                     "RCLONE_CONFIG": f"rclone/{uid}.conf",
                     "TOKEN_PICKLE": f"tokens/{uid}.pickle",
+                    "USER_COOKIE_FILE": f"cookies/{uid}/cookies.txt",
                 }
 
                 async def save_file(file_path, content):
                     dir_path = ospath.dirname(file_path)
                     if not await aiopath.exists(dir_path):
                         await makedirs(dir_path)
-                    async with aiopen(file_path, "wb+") as f:
-                        await f.write(content)
+                    if file_path.startswith("cookies/") and file_path.endswith(".txt"):
+                        async with aiopen(file_path, "wb") as f:
+                            if isinstance(content, str):
+                                content = content.encode("utf-8")
+                            await f.write(content)
+                    else:
+                        async with aiopen(file_path, "wb+") as f:
+                            if isinstance(content, str):
+                                content = content.encode("utf-8")
+                            await f.write(content)
 
                 for key, path in paths.items():
                     if row.get(key):
@@ -316,3 +331,13 @@ async def load_configurations():
 
     if not await aiopath.exists("accounts"):
         Config.USE_SERVICE_ACCOUNTS = False
+
+    await TorrentManager.initiate()
+
+    if Config.DISABLE_TORRENTS:
+        LOGGER.info("Torrents are disabled. Skipping qBittorrent initialization.")
+    else:
+        try:
+            await TorrentManager.qbittorrent.app.set_preferences(qbit_options)
+        except Exception as e:
+            LOGGER.error(f"Failed to configure qBittorrent: {e}")

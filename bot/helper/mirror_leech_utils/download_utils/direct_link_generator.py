@@ -8,7 +8,7 @@ from re import findall, match, search
 from requests import Session, post, get, RequestException
 from requests.adapters import HTTPAdapter
 from time import sleep
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, urlparse, quote
 from urllib3.util.retry import Retry
 from uuid import uuid4
 from base64 import b64decode, b64encode
@@ -23,12 +23,412 @@ user_agent = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:122.0) Gecko/20100101 Firefox/122.0"
 )
 
+debrid_link_supported_sites = [
+    "1024tera.com",
+    "1024terabox.com",
+    "1dl.net",
+    "1fichier.com",
+    "24hd.club",
+    "449unceremoniousnasoseptal.com",
+    "4funbox.com",
+    "4tube.com",
+    "academicearth.org",
+    "acast.com",
+    "add-anime.net",
+    "air.mozilla.org",
+    "albavido.xyz",
+    "alterupload.com",
+    "alphaporno.com",
+    "amazonaws.com",
+    "anime789.com",
+    "animalist.com",
+    "animalplanet.com",
+    "apkadmin.com",
+    "aparat.com",
+    "anysex.com",
+    "audi-mediacenter.com",
+    "audioboom.com",
+    "audiomack.com",
+    "bayfiles.com",
+    "beeg.com",
+    "camdemy.com",
+    "chilloutzone.net",
+    "cjoint.net",
+    "cinema.arte.tv",
+    "clickndownload.org",
+    "clicknupload.cc",
+    "clicknupload.club",
+    "clicknupload.co",
+    "clicknupload.download",
+    "clicknupload.link",
+    "clicknupload.org",
+    "clubic.com",
+    "clyp.it",
+    "concert.arte.tv",
+    "creative.arte.tv",
+    "daclips.in",
+    "dailyplanet.pw",
+    "dailymail.co.uk",
+    "dailymotion.com",
+    "ddc.arte.tv",
+    "ddownload.com",
+    "ddl.to",
+    "democracynow.org",
+    "depositfiles.com",
+    "desfichiers.com",
+    "destinationamerica.com",
+    "dfichiers.com",
+    "diasfem.com",
+    "dl4free.com",
+    "dl.free.fr",
+    "dood.cx",
+    "dood.la",
+    "dood.pm",
+    "dood.re",
+    "dood.sh",
+    "dood.so",
+    "dood.stream",
+    "dood.video",
+    "dood.watch",
+    "dood.ws",
+    "dood.yt",
+    "dooood.com",
+    "doods.pro",
+    "doods.yt",
+    "drop.download",
+    "dropapk.to",
+    "dropbox.com",
+    "ds2play.com",
+    "ds2video.com",
+    "dutrag.com",
+    "e.pcloud.link",
+    "ebaumsworld.com",
+    "easybytez.com",
+    "easybytez.eu",
+    "easybytez.me",
+    "easyupload.io",
+    "eitb.tv",
+    "elfile.net",
+    "elitefile.net",
+    "emload.com",
+    "embedwish.com",
+    "embedsito.com",
+    "fcdn.stream",
+    "fastfile.cc",
+    "feurl.com",
+    "femax20.com",
+    "fembed-hd.com",
+    "fembed.com",
+    "fembed9hd.com",
+    "femoload.xyz",
+    "file.al",
+    "fileaxa.com",
+    "filecat.net",
+    "filedot.to",
+    "filedot.xyz",
+    "filefactory.com",
+    "filelions.co",
+    "filelions.live",
+    "filelions.online",
+    "filelions.site",
+    "filelions.to",
+    "filenext.com",
+    "filer.net",
+    "filerice.com",
+    "filesfly.cc",
+    "filespace.com",
+    "filestore.me",
+    "filextras.com",
+    "fikper.com",
+    "flashbit.cc",
+    "flipagram.com",
+    "footyroom.com",
+    "formula1.com",
+    "franceculture.fr",
+    "free.fr",
+    "freeterabox.com",
+    "future.arte.tv",
+    "gameinformer.com",
+    "gamersyde.com",
+    "gcloud.live",
+    "gigapeta.com",
+    "gibibox.com",
+    "github.com",
+    "gofile.io",
+    "goloady.com",
+    "goaibox.com",
+    "gorillavid.in",
+    "hellporno.com",
+    "hentai.animestigma.com",
+    "highload.to",
+    "hitf.cc",
+    "hitfile.net",
+    "hornbunny.com",
+    "hotfile.io",
+    "html5-player.libsyn.com",
+    "hulkshare.com",
+    "hxfile.co",
+    "icerbox.com",
+    "imdb.com",
+    "info.arte.tv",
+    "instagram.com",
+    "investigationdiscovery.com",
+    "isra.cloud",
+    "itar-tass.com",
+    "jamendo.com",
+    "jove.com",
+    "jplayer.net",
+    "jumploads.com",
+    "k.to",
+    "k2s.cc",
+    "katfile.com",
+    "keep2share.cc",
+    "keep2share.com",
+    "keek.com",
+    "keezmovies.com",
+    "khanacademy.org",
+    "kickstarter.com",
+    "kissmovies.net",
+    "kitabmarkaz.xyz",
+    "krasview.ru",
+    "krakenfiles.com",
+    "kshared.com",
+    "la7.it",
+    "lbx.to",
+    "lci.fr",
+    "libsyn.com",
+    "linkbox.to",
+    "load.to",
+    "liveleak.com",
+    "livestream.com",
+    "lulacloud.com",
+    "m6.fr",
+    "mediafile.cc",
+    "mediafire.com",
+    "mediafirefolder.com",
+    "mediashore.org",
+    "megadl.fr",
+    "megadl.org",
+    "mega.co.nz",
+    "mega.nz",
+    "mesfichiers.fr",
+    "mesfichiers.org",
+    "metacritic.com",
+    "mexa.sh",
+    "mexashare.com",
+    "mgoon.com",
+    "mirrobox.com",
+    "mixcloud.com",
+    "mixdrop.club",
+    "mixdrop.co",
+    "mixdrop.sx",
+    "mixdrop.to",
+    "modsbase.com",
+    "momerybox.com",
+    "mojvideo.com",
+    "moviemaniac.org",
+    "movpod.in",
+    "mrdhan.com",
+    "mx-sh.net",
+    "mycloudz.cc",
+    "musicplayon.com",
+    "myspass.de",
+    "myfile.is",
+    "nephobox.com",
+    "nelion.me",
+    "new.livestream.com",
+    "news.yahoo.com",
+    "nitro.download",
+    "nitroflare.com",
+    "noregx.debrid.link",
+    "odatv.com",
+    "onionstudios.com",
+    "opvid.online",
+    "opvid.org",
+    "ora.tv",
+    "osdn.net",
+    "pcloud.com",
+    "piecejointe.net",
+    "pixeldrain.com",
+    "play.fm",
+    "play.lcp.fr",
+    "player.vimeo.com",
+    "player.vimeopro.com",
+    "plays.tv",
+    "playvid.com",
+    "pjointe.com",
+    "pornhd.com",
+    "pornhub.com",
+    "prefiles.com",
+    "pyvideo.org",
+    "racaty.com",
+    "rapidgator.asia",
+    "rapidgator.net",
+    "reputationsheriffkennethsand.com",
+    "reverbnation.com",
+    "revision3.com",
+    "rg.to",
+    "rts.ch",
+    "rtve.es",
+    "salefiles.com",
+    "sbs.com.au",
+    "sciencechannel.com",
+    "screen.yahoo.com",
+    "scribd.com",
+    "seeker.com",
+    "send.cm",
+    "sendspace.com",
+    "sexhd.co",
+    "shrdsk.me",
+    "sharemods.com",
+    "sharinglink.club",
+    "sites.arte.tv",
+    "skysports.com",
+    "slmaxed.com",
+    "sltube.org",
+    "slwatch.co",
+    "solidfiles.com",
+    "soundcloud.com",
+    "soundgasm.net",
+    "steamcommunity.com",
+    "steampowered.com",
+    "store.steampowered.com",
+    "stream.cz",
+    "streamable.com",
+    "streamcloud.eu",
+    "streamhub.ink",
+    "streamhub.to",
+    "streamlare.com",
+    "streamtape.cc",
+    "streamtape.co",
+    "streamtape.com",
+    "streamtape.net",
+    "streamtape.to",
+    "streamtape.wf",
+    "streamtape.xyz",
+    "streamta.pe",
+    "streamvid.net",
+    "streamwish.to",
+    "subyshare.com",
+    "sunporno.com",
+    "superplayxyz.club",
+    "supervideo.tv",
+    "swisstransfer.com",
+    "suzihaza.com",
+    "teachertube.com",
+    "teamcoco.com",
+    "ted.com",
+    "tenvoi.com",
+    "terabox.app",
+    "terabox.com",
+    "terabox.link",
+    "teraboxapp.com",
+    "teraboxlink.com",
+    "teraboxshare.com",
+    "terafileshare.com",
+    "terasharelink.com",
+    "terazilla.com",
+    "tezfiles.com",
+    "thescene.com",
+    "thesixtyone.com",
+    "there.to",
+    "tfo.org",
+    "tlc.com",
+    "tmpsend.com",
+    "tnaflix.com",
+    "transfert.free.fr",
+    "trubobit.com",
+    "turb.cc",
+    "turbabit.com",
+    "turbobit.cc",
+    "turbobit.live",
+    "turbobit.net",
+    "turbobit.online",
+    "turbobit.pw",
+    "turbobit.ru",
+    "turbobitlt.co",
+    "turboget.net",
+    "turbo.fr",
+    "turbo.to",
+    "turb.pw",
+    "turb.to",
+    "tu.tv",
+    "uloz.to",
+    "ulozto.cz",
+    "ulozto.net",
+    "ulozto.sk",
+    "up-4ever.com",
+    "up-4ever.net",
+    "upload-4ever.com",
+    "uptobox.com",
+    "uptobox.eu",
+    "uptobox.fr",
+    "uptobox.link",
+    "uptostream.com",
+    "uptostream.eu",
+    "uptostream.fr",
+    "uptostream.link",
+    "upvid.biz",
+    "upvid.cloud",
+    "upvid.co",
+    "upvid.host",
+    "upvid.live",
+    "upvid.pro",
+    "uqload.co",
+    "uqload.com",
+    "uqload.io",
+    "userload.co",
+    "usersdrive.com",
+    "vanfem.com",
+    "vbox7.com",
+    "vcdn.io",
+    "vcdnplay.com",
+    "veehd.com",
+    "veoh.com",
+    "vid.me",
+    "vidohd.com",
+    "vidoza.net",
+    "vidsource.me",
+    "vimeopro.com",
+    "viplayer.cc",
+    "voe-un-block.com",
+    "voe-unblock.com",
+    "voe.sx",
+    "voeun-block.net",
+    "voeunbl0ck.com",
+    "voeunblck.com",
+    "voeunblk.com",
+    "voeunblock1.com",
+    "voeunblock2.com",
+    "voeunblock3.com",
+    "votrefile.xyz",
+    "votrefiles.club",
+    "wat.tv",
+    "wdupload.com",
+    "wimp.com",
+    "world-files.com",
+    "worldbytez.com",
+    "wupfile.com",
+    "xstreamcdn.com",
+    "yahoo.com",
+    "yodbox.com",
+    "youdbox.com",
+    "youtube.com",
+    "youtu.be",
+    "zachowajto.pl",
+    "zidiplay.com",
+]
+
 
 def direct_link_generator(link):
     """direct links generator"""
     domain = urlparse(link).hostname
     if not domain:
         raise DirectDownloadLinkException("ERROR: Invalid URL")
+    elif Config.DEBRID_LINK_API and any(
+        x in domain for x in debrid_link_supported_sites
+    ):
+        return debrid_link(link)
     elif "yadi.sk" in link or "disk.yandex." in link:
         return yandex_disk(link)
     elif "buzzheavier.com" in domain:
@@ -149,6 +549,7 @@ def direct_link_generator(link):
             "freeterabox.com",
             "1024terabox.com",
             "teraboxshare.com",
+            "terafileshare.com",
         ]
     ):
         return terabox(link)
@@ -227,6 +628,39 @@ def get_captcha_token(session, params):
     res = session.post(f"{recaptcha_api}/reload", params=params)
     if token := findall(r'"rresp","(.*?)"', res.text):
         return token[0]
+
+
+def debrid_link(url):
+    cget = create_scraper().request
+    resp = cget(
+        "POST",
+        f"https://debrid-link.com/api/v2/downloader/add?access_token={Config.DEBRID_LINK_API}",
+        data={"url": url},
+    ).json()
+    if resp["success"] != True:
+        raise DirectDownloadLinkException(
+            f"ERROR: {resp['error']} & ERROR ID: {resp['error_id']}"
+        )
+    if isinstance(resp["value"], dict):
+        return resp["value"]["downloadUrl"]
+    elif isinstance(resp["value"], list):
+        details = {
+            "contents": [],
+            "title": unquote(url.rstrip("/").split("/")[-1]),
+            "total_size": 0,
+        }
+        for dl in resp["value"]:
+            if dl.get("expired", False):
+                continue
+            item = {
+                "path": path.join(details["title"]),
+                "filename": dl["name"],
+                "url": dl["downloadUrl"],
+            }
+            if "size" in dl:
+                details["total_size"] += dl["size"]
+            details["contents"].append(item)
+        return details
 
 
 def buzzheavier(url):
@@ -528,17 +962,13 @@ def onedrive(link):
 
 
 def pixeldrain(url):
-    """Convert all pixeldrain link types to pd.cybar.xyz equivalent."""
-    url = url.strip("/ ")
-    file_id = url.split("/")[-1]
-
-    # Identify the link type (u, l, d, t)
-    link_type = url.split("/")[-2]
-    if link_type in ["u", "l", "d", "t"]:
-        return f"https://pd.cybar.xyz/{file_id}"
-
-    # Fallback for unknown types
-    raise DirectDownloadLinkException("ERROR: Invalid Pixeldrain URL type.")
+    try:
+        url = url.rstrip("/")
+        code = url.split("/")[-1].split("?", 1)[0]
+        response = get("https://pd.cybar.xyz/", allow_redirects=True)
+        return response.url + code
+    except Exception as e:
+        raise DirectDownloadLinkException("ERROR: Direct link not found")
 
 
 def streamtape(url):
@@ -705,70 +1135,13 @@ def uploadee(url):
         raise DirectDownloadLinkException("ERROR: Direct Link not found")
 
 
-def terabox(url, video_quality="HD Video", save_dir="HD_Video"):
-    """Terabox direct link generator
-    https://github.com/Dawn-India/Z-Mirror"""
-
-    pattern = r"/s/(\w+)|surl=(\w+)"
-    if not search(pattern, url):
-        raise DirectDownloadLinkException("ERROR: Invalid terabox URL")
-
-    netloc = urlparse(url).netloc
-    terabox_url = url.replace(netloc, "1024tera.com")
-
-    urls = [
-        "https://ytshorts.savetube.me/api/v1/terabox-downloader",
-        f"https://teraboxvideodownloader.nepcoderdevs.workers.dev/?url={terabox_url}",
-        f"https://terabox.udayscriptsx.workers.dev/?url={terabox_url}",
-        f"https://mavimods.serv00.net/Mavialt.php?url={terabox_url}",
-        f"https://mavimods.serv00.net/Mavitera.php?url={terabox_url}",
-    ]
-
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:126.0) Gecko/20100101 Firefox/126.0",
-        "Accept": "application/json, text/plain, */*",
-        "Accept-Language": "en-US,en;q=0.5",
-        "Content-Type": "application/json",
-        "Origin": "https://ytshorts.savetube.me",
-        "Alt-Used": "ytshorts.savetube.me",
-        "Sec-Fetch-Dest": "empty",
-        "Sec-Fetch-Mode": "cors",
-        "Sec-Fetch-Site": "same-origin",
-    }
-
-    for base_url in urls:
-        try:
-            if "api/v1" in base_url:
-                response = post(base_url, headers=headers, json={"url": terabox_url})
-            else:
-                response = get(base_url)
-
-            if response.status_code == 200:
-                break
-        except RequestException as e:
-            raise DirectDownloadLinkException(f"ERROR: {e.__class__.__name__}") from e
-    else:
-        raise DirectDownloadLinkException("ERROR: Unable to fetch the JSON data")
-
-    data = response.json()
-    details = {"contents": [], "title": "", "total_size": 0}
-
-    for item in data["response"]:
-        title = item["title"]
-        resolutions = item.get("resolutions", {})
-        if zlink := resolutions.get(video_quality):
-            details["contents"].append(
-                {"url": zlink, "filename": title, "path": ospath.join(title, save_dir)}
-            )
-        details["title"] = title
-
-    if not details["contents"]:
-        raise DirectDownloadLinkException("ERROR: No valid download links found")
-
-    if len(details["contents"]) == 1:
-        return details["contents"][0]["url"]
-
-    return details
+def terabox(url):
+    try:
+        encoded_url = quote(url)
+        final_url = f"https://teradlrobot.cheemsbackup.workers.dev/?url={encoded_url}"
+        return final_url
+    except Exception as e:
+        raise DirectDownloadLinkException("Failed to bypass Terabox URL")
 
 
 def filepress(url):

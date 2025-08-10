@@ -34,6 +34,18 @@ HELPER_TOKENS = ""
 MEGA_EMAIL = ""
 MEGA_PASSWORD = ""
 
+# Disable Options
+DISABLE_TORRENTS = False
+DISABLE_LEECH = False
+DISABLE_BULK = False
+DISABLE_MULTI = False
+DISABLE_SEED = False
+DISABLE_FF_MODE = False
+
+# Telegraph
+AUTHOR_NAME = "WZML-X"
+AUTHOR_URL = "https://t.me/WZML_X"
+
 # Task Limits
 DIRECT_LIMIT = 0
 MEGA_LIMIT = 0
@@ -96,6 +108,12 @@ IS_TEAM_DRIVE = False
 STOP_DUPLICATE = False
 INDEX_URL = ""
 
+# YT Tools
+YT_DESP = "Uploaded to YouTube by WZML-X bot"
+YT_TAGS = ["telegram", "bot", "youtube"]  # or as a comma-separated string
+YT_CATEGORY_ID = 22
+YT_PRIVACY_STATUS = "unlisted"
+
 # Rclone
 RCLONE_PATH = ""
 RCLONE_FLAGS = ""
@@ -147,8 +165,12 @@ LEECH_PREFIX = ""
 LEECH_SUFFIX = ""
 LEECH_FONT = ""
 LEECH_CAPTION = ""
-LEECH_DUMP_CHAT = ""
 THUMBNAIL_LAYOUT = ""
+
+# Log Channels
+LEECH_DUMP_CHAT = ""
+LINKS_LOG_ID = ""
+MIRROR_LOG_ID = ""
 
 # qBittorrent/Aria2c
 TORRENT_TIMEOUT = 0

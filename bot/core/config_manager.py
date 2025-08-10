@@ -16,6 +16,13 @@ class Config:
     DATABASE_URL = ""
     DEFAULT_UPLOAD = "rc"
     DELETE_LINKS = False
+    DEBRID_LINK_API = ""
+    DISABLE_TORRENTS = False
+    DISABLE_LEECH = False
+    DISABLE_BULK = False
+    DISABLE_MULTI = False
+    DISABLE_SEED = False
+    DISABLE_FF_MODE = False
     EQUAL_SPLITS = False
     EXCLUDED_EXTENSIONS = ""
     FFMPEG_CMDS = {}
@@ -24,6 +31,8 @@ class Config:
     FORCE_SUB_IDS = ""
     GDRIVE_ID = ""
     GD_DESP = "Uploaded with WZ Bot"
+    AUTHOR_NAME = "WZML-X"
+    AUTHOR_URL = "https://t.me/WZML_X"
     INSTADL_API = ""
     IMDB_TEMPLATE = ""
     INCOMPLETE_TASK_NOTIFIER = False
@@ -48,6 +57,8 @@ class Config:
     ARCHIVE_LIMIT = 0
     STORAGE_LIMIT = 0
     LEECH_DUMP_CHAT = ""
+    LINKS_LOG_ID = ""
+    MIRROR_LOG_ID = ""
     CLEAN_LOG_MSG = False
     LEECH_PREFIX = ""
     LEECH_CAPTION = ""
@@ -103,6 +114,10 @@ class Config:
     USE_SERVICE_ACCOUNTS = False
     WEB_PINCODE = True
     YT_DLP_OPTIONS = {}
+    YT_DESP = "Uploaded with WZML-X bot"
+    YT_TAGS = ["telegram", "bot", "youtube"]
+    YT_CATEGORY_ID = 22
+    YT_PRIVACY_STATUS = "unlisted"
 
     @classmethod
     def get(cls, key):
@@ -223,8 +238,8 @@ class Config:
 
 
 class BinConfig:
-    ARIA2_NAME = "speeddemon"
-    QBIT_NAME = "torrentgod"
-    FFMPEG_NAME = "vidwarlock"
-    RCLONE_NAME = "cloudphantom"
-    SABNZBD_NAME = "newsslayer"
+    ARIA2_NAME = "blitzfetcher"
+    QBIT_NAME = "stormtorrent"
+    FFMPEG_NAME = "mediaforge"
+    RCLONE_NAME = "ghostdrive"
+    SABNZBD_NAME = "newsripper"

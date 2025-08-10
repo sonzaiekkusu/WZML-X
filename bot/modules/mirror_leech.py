@@ -2,6 +2,7 @@ from base64 import b64encode
 from re import match as re_match
 
 from aiofiles.os import path as aiopath
+from bot.core.config_manager import Config
 
 from .. import DOWNLOAD_DIR, LOGGER, bot_loop, task_dict_lock
 from ..helper.ext_utils.bot_utils import (
@@ -109,11 +110,13 @@ class Mirror(TaskListener):
             "-hl": False,
             "-bt": False,
             "-ut": False,
+            "-yt": False,
             "-i": 0,
             "-sp": 0,
             "link": "",
             "-n": "",
             "-m": "",
+            "-meta": "",
             "-up": "",
             "-rcf": "",
             "-au": "",
@@ -128,6 +131,28 @@ class Mirror(TaskListener):
         }
 
         arg_parser(input_list[1:], args)
+
+        if Config.DISABLE_BULK and args.get("-b", False):
+            await send_message(self.message, "Bulk downloads are currently disabled.")
+            return
+
+        if Config.DISABLE_MULTI and int(args.get("-i", 1)) > 1:
+            await send_message(
+                self.message,
+                "Multi-downloads are currently disabled. Please try without the -i flag.",
+            )
+            return
+
+        if Config.DISABLE_SEED and args.get("-d", False):
+            await send_message(
+                self.message,
+                "Seeding is currently disabled. Please try without the -d flag.",
+            )
+            return
+
+        if Config.DISABLE_FF_MODE and args.get("-ff"):
+            await send_message(self.message, "FFmpeg commands are currently disabled.")
+            return
 
         self.select = args["-s"]
         self.seed = args["-d"]
@@ -155,6 +180,14 @@ class Mirror(TaskListener):
         self.folder_name = f"/{args["-m"]}".rstrip("/") if len(args["-m"]) > 0 else ""
         self.bot_trans = args["-bt"]
         self.user_trans = args["-ut"]
+        self.is_yt = args["-yt"]
+        self.metadata_dict = self.default_metadata_dict.copy()
+        self.audio_metadata_dict = self.audio_metadata_dict.copy()
+        self.video_metadata_dict = self.video_metadata_dict.copy()
+        self.subtitle_metadata_dict = self.subtitle_metadata_dict.copy()
+        if args["-meta"]:
+            meta = self.metadata_processor.parse_string(args["-meta"])
+            self.metadata_dict = self.metadata_processor.merge_dicts(self.metadata_dict, meta)
 
         headers = args["-h"]
         is_bulk = args["-b"]
@@ -419,6 +452,9 @@ async def nzb_mirror(client, message):
 
 
 async def leech(client, message):
+    if Config.DISABLE_LEECH:
+        await message.reply("The Leech command is currently disabled.")
+        return
     bot_loop.create_task(Mirror(client, message, is_leech=True).new_event())
 
 
