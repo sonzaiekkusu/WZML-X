@@ -1135,14 +1135,46 @@ def uploadee(url):
         raise DirectDownloadLinkException("ERROR: Direct Link not found")
 
 
-def terabox(url):
-    try:
-        encoded_url = quote(url)
-        final_url = f"https://teradlrobot.cheemsbackup.workers.dev/?url={encoded_url}"
-        return final_url
-    except Exception as e:
-        raise DirectDownloadLinkException("Failed to bypass Terabox URL")
+API_BASE = "https://terabox-v2.sonzaixlab.workers.dev/?shorturl="
 
+def _extract_shortid(url: str) -> str:
+    # contoh: https://1024terabox.com/s/1knHMkzMsYsLOOXrZR1V-HA -> 1knHMkzMsYsLOOXrZR1V-HA
+    p = urlparse(url)
+    parts = p.path.strip("/").split("/")
+    if len(parts) >= 2 and parts[0] == "s":
+        return parts[1]
+    # kalau user langsung kasih shortid
+    return url
+
+def terabox(url_or_shortid: str):
+    shortid = _extract_shortid(url_or_shortid)
+    try:
+        r = requests.get(API_BASE + shortid, timeout=15)
+        data = r.json()
+    except Exception as e:
+        raise DirectDownloadLinkException(f"ERROR: {e.__class__.__name__}") from e
+
+    if data.get("status") != "success" or not data.get("result"):
+        raise DirectDownloadLinkException("ERROR: File not found!")
+
+    details = {"contents": [], "title": "", "total_size": 0}
+
+    for it in data["result"]:
+        filename = it.get("filename", "unknown")
+        url = it.get("proxy_download") or it.get("download_url")
+        size = int(it.get("size", "0"))
+        details["contents"].append({
+            "path": "",
+            "filename": filename,
+            "url": url,
+        })
+        details["total_size"] += size
+
+    details["title"] = details["contents"][0]["filename"]
+
+    if len(details["contents"]) == 1:
+        return details["contents"][0]["url"]
+    return details
 
 def filepress(url):
     with create_scraper() as session:
