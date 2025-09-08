@@ -1,3 +1,5 @@
+import re
+import requests
 from cloudscraper import create_scraper
 from hashlib import sha256
 from http.cookiejar import MozillaCookieJar
@@ -1133,7 +1135,9 @@ def uploadee(url):
         return link[0]
     else:
         raise DirectDownloadLinkException("ERROR: Direct Link not found")
-
+        
+class DirectDownloadLinkException(Exception):
+    pass
 
 API_BASE = "https://terabox-v2.sonzaixlab.workers.dev/?shorturl="
 
